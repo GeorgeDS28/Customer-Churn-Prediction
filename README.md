@@ -1,171 +1,287 @@
-to activate virtual env
+Customer Churn Prediction
+What this project does
+
+This repository builds a small, end-to-end machine learning pipeline and simple web interface to predict whether a Telco customer will churn (i.e., stop using the service).
+It includes data preprocessing, model training, model artifact saving, and a Flask web app to run live predictions from user input.
+
+Project overview (high level)
+
+Input: customer features from the Telco dataset (demographics, account info, services, tenure, charges).
+
+Process: clean & preprocess data, convert categorical features, train a classifier, evaluate performance, and save the trained model + preprocessing objects.
+
+Output: a binary churn prediction (Yes/No) returned by a web UI or API endpoint.
+
+This project is useful for learning:
+
+Data cleaning & preprocessing
+
+Feature encoding and scaling
+
+Model training, evaluation, and persistence
+
+Serving a model through a Flask web app
+
+File / folder structure — explained step by step
+
+app.py
+Web application entry point (Flask).
+Responsibilities:
+
+Loads saved model artifacts (model, encoder/scaler, feature list).
+
+Renders templates/index.html for a human-friendly form.
+
+Provides an API endpoint (e.g., /predict) that accepts form data or JSON and returns the prediction.
+
+Converts incoming input into the same preprocessed format the model expects and runs .predict() or .predict_proba().
+
+customer_churn_prediction.py
+Training + evaluation script.
+Responsibilities:
+
+Loads WA_Fn-UseC_-Telco-Customer-Churn.csv.
+
+Performs exploratory cleaning: handle missing values, fix data types, remove duplicates if any.
+
+Encodes categorical variables (OneHotEncoding / LabelEncoding / Ordinal as appropriate).
+
+Scales numerical features where necessary (StandardScaler or MinMaxScaler).
+
+Splits data into train / test sets.
+
+Trains a classifier (e.g., Logistic Regression, RandomForest, XGBoost).
+
+Evaluates performance (accuracy, precision, recall, F1, confusion matrix, AUC).
+
+Saves artifacts: trained model (pickle/joblib), encoders/scalers, and a JSON/py file listing feature order.
+
+WA_Fn-UseC_-Telco-Customer-Churn.csv
+The Telco Customer Churn dataset. Contains customer records with churn label.
+Notes:
+
+Publicly available dataset — check original license before redistribution.
+
+Typical columns: customerID, gender, SeniorCitizen, Partner, Dependents, tenure, PhoneService, MultipleLines, InternetService, OnlineSecurity, OnlineBackup, DeviceProtection, TechSupport, StreamingTV, StreamingMovies, Contract, PaperlessBilling, PaymentMethod, MonthlyCharges, TotalCharges, Churn.
+
+input.txt (optional)
+Example raw input (flat key:value pairs) used by the app/script for quick local testing (useful for CLI or simple API calls).
+
+templates/index.html
+HTML template used by Flask to render a simple form for entering customer fields and getting a prediction.
+It should:
+
+Present friendly labels for each feature (dropdowns for categorical fields, sliders/textboxes for numeric).
+
+Submit a POST to /predict (or whichever endpoint app.py defines).
+
+Display the predicted class and optionally probability.
+
+requirements.txt
+Python package list required to run this project. Typical packages:
+
+flask
+
+pandas
+
+scikit-learn
+
+joblib (or pickle)
+
+optional: xgboost, flask-cors, gunicorn
+Pin versions if you want reproducibility.
+
+Step-by-step setup & usage
+1. Create and activate a virtual environment (Windows PowerShell)
 python -m venv venv
-venv\Scripts\activate
+.\venv\Scripts\Activate.ps1
 
 
+macOS / Linux:
 
-Let’s go step by step — I’ll show you how to:
-
-Check library versions in Colab
-
-Match those versions in VS Code
-
-Create & activate a virtual environment
-
-Install the exact dependencies
-
-Run the backend + frontend properly
-
-🧩 STEP 1: Check Python & library versions in Google Colab
-
-Run the following in your Colab notebook:
-
-import sys
-import sklearn
-import numpy
-import pandas
-import joblib
-
-print("Python:", sys.version)
-print("scikit-learn:", sklearn.__version__)
-print("numpy:", numpy.__version__)
-print("pandas:", pandas.__version__)
-print("joblib:", joblib.__version__)
-
-
-Example output (typical for Colab as of Oct 2025):
-
-Python: 3.10.12
-scikit-learn: 1.5.1
-numpy: 1.26.4
-pandas: 2.2.2
-joblib: 1.4.2
-
-
-Keep those numbers handy.
-
-⚙️ STEP 2: Create project folder locally
-
-Open VS Code, and create a folder, e.g.:
-
-folder name/
-│
-├── app.py
-├── placement_model.pkl
-├── index.html
-└── requirements.txt
-
-🧱 STEP 3: Create and activate a virtual environment
-On Windows (PowerShell or CMD)
-python -m venv venv
-venv\Scripts\activate
-
-On macOS/Linux
 python3 -m venv venv
 source venv/bin/activate
 
-
-Once activated, your terminal will show (venv) in front.
-
-📦 STEP 4: Create requirements.txt
-
-Make a file requirements.txt in your folder and copy your Colab versions:
-
-Flask==3.0.3
-numpy==1.26.4
-pandas==2.2.2
-scikit-learn==1.5.1
-joblib==1.4.2
-
-
-Now install all dependencies:
-
+2. Install dependencies
 pip install -r requirements.txt
 
+3. Train the model (generate artifacts)
 
-✅ This ensures your VS Code environment matches your Colab exactly.
+Run the training script to preprocess the data, train a model, evaluate it, and save artifacts (model + preprocessors).
 
-💻 STEP 5: Flask backend (app.py)
+python customer_churn_prediction.py
 
-Here’s the version that will work smoothly with those library versions:
 
-from flask import Flask, request, jsonify, render_template
-import joblib
-import numpy as np
+What to expect from this script:
 
-app = Flask(__name__, template_folder='.')
+Console logs about data shapes, missing values handled, and model metrics.
 
-# Load your trained model
-model = joblib.load('placement_model.pkl')
+Output files like model.joblib, encoder.joblib, scaler.joblib, and features.json (names depend on your implementation).
 
-@app.route('/')
-def home():
-    return render_template('index.html')
-
-@app.route('/predict', methods=['POST'])
-def predict():
-    data = request.get_json(force=True)
-    features = np.array(data['features']).reshape(1, -1)
-    prediction = model.predict(features)
-    return jsonify({'prediction': int(prediction[0])})
-
-if __name__ == '__main__':
-    app.run(debug=True)
-
-🎨 STEP 6: Frontend (index.html)
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Placement Prediction</title>
-    <style>
-        body { font-family: Arial; text-align: center; margin-top: 60px; }
-        input, button { margin: 8px; padding: 10px; font-size: 16px; }
-        #result { margin-top: 20px; font-weight: bold; }
-    </style>
-</head>
-<body>
-    <h2>🎓 Placement Prediction App</h2>
-    <input type="number" id="feature1" placeholder="Enter feature 1 (e.g., 7.0)">
-    <input type="number" id="feature2" placeholder="Enter feature 2 (e.g., 100.0)">
-    <br>
-    <button onclick="predict()">Predict</button>
-    <p id="result"></p>
-
-    <script>
-        async function predict() {
-            const f1 = parseFloat(document.getElementById('feature1').value);
-            const f2 = parseFloat(document.getElementById('feature2').value);
-            const response = await fetch('/predict', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ features: [f1, f2] })
-            });
-            const result = await response.json();
-            document.getElementById('result').innerText =
-                result.prediction === 1 ? "✅ Placed" : "❌ Not Placed";
-        }
-    </script>
-</body>
-</html>
-
-▶️ STEP 7: Run it
-
-Make sure you’ve activated your virtual environment, then run:
-
+4. Run the web app
 python app.py
 
 
-Visit http://127.0.0.1:5000
+The app usually starts on http://127.0.0.1:5000/. Open that in your browser to use the form-based UI.
 
-and you’ll see your frontend connected to your backend 💫
+The app’s /predict endpoint will consume form data (POST) or JSON.
 
-🧩 Optional: Generate requirements.txt Automatically
+Example API usage (curl)
 
-If you want to export exact versions from your environment:
+If app.py exposes a JSON API at /predict, you can call it like this:
 
-pip freeze > requirements.txt
+curl -X POST http://127.0.0.1:5000/predict \
+  -H "Content-Type: application/json" \
+  -d '{
+    "gender": "Male",
+    "SeniorCitizen": 0,
+    "Partner": "Yes",
+    "Dependents": "No",
+    "tenure": 12,
+    "PhoneService": "Yes",
+    "InternetService": "DSL",
+    "Contract": "Month-to-month",
+    "MonthlyCharges": 70.5,
+    "TotalCharges": 700.0
+  }'
 
 
-This ensures your app can be deployed anywhere with identical dependencies.
+Response (example):
+
+{
+  "prediction": "Yes",
+  "probability": 0.82
+}
+
+
+If your app uses form POST, use the HTML UI or curl -F.
+
+Model & preprocessing details — what typically happens inside customer_churn_prediction.py
+
+Load data
+df = pd.read_csv("WA_Fn-UseC_-Telco-Customer-Churn.csv")
+
+Data cleaning
+
+Convert TotalCharges to numeric (some entries may be blank -> NaN) and fill or drop appropriately.
+
+Fill missing values or remove rows with incomplete crucial fields.
+
+Convert SeniorCitizen to int/boolean.
+
+Feature selection / engineering
+
+Drop customerID (identifier not useful for prediction).
+
+Create tenure buckets (optional): e.g., 0-12, 12-24, 24+.
+
+Create interaction features if helpful (e.g., has_internet = InternetService != "No").
+
+Encode categorical variables
+
+For nominal categories: OneHotEncoder or pd.get_dummies.
+
+For binary categories: map Yes/No to 1/0.
+
+Save encoders so the same mapping is applied at inference time.
+
+Scale numeric variables
+
+Use StandardScaler or MinMaxScaler for MonthlyCharges, TotalCharges, tenure.
+
+Save scaler for inference.
+
+Train/test split
+
+train_test_split(X, y, test_size=0.2, random_state=42, stratify=y)
+
+Model training
+
+Baseline: Logistic Regression.
+
+Stronger: RandomForestClassifier or XGBoost for better performance.
+
+Tune hyperparameters with GridSearchCV (optional).
+
+Evaluation
+
+Print metrics: accuracy, precision, recall, F1, ROC AUC.
+
+Plot or print confusion matrix.
+
+Save artifacts
+
+joblib.dump(model, "model.joblib")
+
+joblib.dump(preprocessor, "preprocessor.joblib") OR save separate encoder & scaler.
+
+Save a features.json with the exact ordered list of features the model expects.
+
+How app.py should use saved artifacts (high level)
+
+Load model.joblib and preprocessor.joblib (or encoder + scaler).
+
+When a request arrives:
+
+Parse input (form or JSON).
+
+Build a DataFrame or array with the same column order saved in features.json.
+
+Apply the saved encoder/scaler/pipeline to the input.
+
+Call model.predict() and optionally model.predict_proba().
+
+Return a JSON response or render the result on index.html.
+
+Example minimal app.py flow (pseudo)
+from flask import Flask, request, render_template, jsonify
+import joblib
+import pandas as pd
+app = Flask(__name__)
+
+model = joblib.load("model.joblib")
+preprocessor = joblib.load("preprocessor.joblib")
+feature_order = joblib.load("features.joblib")  # or JSON
+
+@app.route("/")
+def home():
+    return render_template("index.html")
+
+@app.route("/predict", methods=["POST"])
+def predict():
+    data = request.get_json() or request.form.to_dict()
+    df = pd.DataFrame([data], columns=feature_order)
+    X = preprocessor.transform(df)
+    prob = model.predict_proba(X)[0,1]
+    pred = "Yes" if prob > 0.5 else "No"
+    return jsonify({"prediction": pred, "probability": float(prob)})
+
+Troubleshooting (common issues & fixes)
+
+Server won’t start: check port conflicts; ensure Flask is installed.
+
+Model artifact not found: run training script first and confirm the artifact filenames/paths.
+
+Input mismatch error: ensure the input dictionary keys match feature names and ordering from training.
+
+Different categories: during inference, unseen categorical values will break encoders — handle with handle_unknown="ignore" in scikit-learn encoders, or map unseen values to an “other” bucket.
+
+Numeric parsing errors: ensure strings like TotalCharges are converted to numeric during training and the same conversion is used at inference.
+
+Suggestions / Next steps (improvements)
+
+Add a Dockerfile and docker-compose.yml for reproducible deployment.
+
+Wrap preprocessing + model in a single scikit-learn Pipeline and save that pipeline only (simpler inference).
+
+Add unit tests for preprocessing & API.
+
+Add CI to retrain automatically when data updates.
+
+Add model explainability: SHAP values to show why a user was predicted to churn.
+
+Add a simple frontend dashboard with examples and dataset stats.
+
+Data & License
+
+WA_Fn-UseC_-Telco-Customer-Churn.csv is commonly available on Kaggle. Confirm the dataset license before redistribution.
