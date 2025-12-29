@@ -1,8 +1,3 @@
-Sure, George. Here’s a **clean, professional, GitHub-ready `README.md`** for your **Customer Churn Prediction — ML Model + Flask Web App** project.
-You can copy-paste this directly into your repo.
-
----
-
 # 📘 Customer Churn Prediction
 
 **Machine Learning Model + Flask Web Application**
